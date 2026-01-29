@@ -93,6 +93,21 @@ export default function RiskDashboard({ walletAddress }: RiskDashboardProps) {
           severity: severity,
           timestamp: aiResult.timestamp * 1000
         })
+
+        // Save to localStorage for Audit History and Wallets Monitor
+        saveAnalysisToHistory(walletAddress, {
+          riskScore: aiResult.risk_score,
+          confidence: aiResult.confidence,
+          severity: severity,
+          timestamp: aiResult.timestamp * 1000,
+          reasoning: aiResult.reasoning
+        })
+        
+        updateMonitoredWallet(walletAddress, {
+          currentRiskScore: aiResult.risk_score,
+          severity: severity,
+          confidence: aiResult.confidence
+        })
       } catch (err) {
         console.error('Error fetching dashboard data:', err)
         setError(err instanceof Error ? err.message : 'Failed to load data')
@@ -256,4 +271,46 @@ function RiskFactor({
       </span>
     </div>
   )
+}
+
+// Helper functions for localStorage
+function saveAnalysisToHistory(walletAddress: string, analysis: any) {
+  const historyKey = `auditHistory_${walletAddress}`
+  const existing = localStorage.getItem(historyKey)
+  const history = existing ? JSON.parse(existing) : []
+  
+  history.unshift({
+    id: Date.now().toString(),
+    ...analysis
+  })
+  
+  // Keep last 50 analyses
+  if (history.length > 50) history.length = 50
+  
+  localStorage.setItem(historyKey, JSON.stringify(history))
+}
+
+function updateMonitoredWallet(walletAddress: string, data: any) {
+  const monitored = localStorage.getItem('monitoredWallets')
+  const wallets = monitored ? JSON.parse(monitored) : []
+  
+  const existing = wallets.find((w: any) => w.address === walletAddress)
+  if (existing) {
+    Object.assign(existing, {
+      ...data,
+      lastSeen: Date.now(),
+      totalAnalyses: (existing.totalAnalyses || 0) + 1
+    })
+  } else {
+    wallets.push({
+      address: walletAddress,
+      lastSeen: Date.now(),
+      totalAnalyses: 1,
+      averageRiskScore: data.currentRiskScore,
+      trend: 'stable',
+      ...data
+    })
+  }
+  
+  localStorage.setItem('monitoredWallets', JSON.stringify(wallets))
 }

@@ -23,40 +23,23 @@ export default function AuditHistory({ walletAddress }: AuditHistoryProps) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Simulate fetching audit history
-    setTimeout(() => {
-      const mockHistory: AuditEvent[] = [
-        {
-          id: '1',
-          severity: 'MEDIUM',
-          riskScore: 42,
-          confidence: 87,
-          timestamp: Date.now() - 3600000,
-          reasoning: 'Wallet shows moderate transaction volume with normal patterns',
-          txHash: '0x1234567890abcdef'
-        },
-        {
-          id: '2',
-          severity: 'LOW',
-          riskScore: 18,
-          confidence: 92,
-          timestamp: Date.now() - 86400000,
-          reasoning: 'Wallet activity is normal with established history',
-          txHash: '0xabcdef1234567890'
-        },
-        {
-          id: '3',
-          severity: 'HIGH',
-          riskScore: 68,
-          confidence: 78,
-          timestamp: Date.now() - 172800000,
-          reasoning: 'Unusual transaction spike detected. User confirmation required.',
-          txHash: '0xfedcba0987654321'
-        }
-      ]
-      setHistory(mockHistory)
-      setLoading(false)
-    }, 800)
+    // Load real audit history from localStorage
+    const historyKey = `auditHistory_${walletAddress}`
+    const stored = localStorage.getItem(historyKey)
+    
+    if (stored) {
+      try {
+        setHistory(JSON.parse(stored))
+      } catch (error) {
+        console.error('Failed to load audit history:', error)
+        setHistory([])
+      }
+    } else {
+      // No history yet for this wallet
+      setHistory([])
+    }
+    
+    setLoading(false)
   }, [walletAddress])
 
   const filteredHistory = filter === 'ALL' 
