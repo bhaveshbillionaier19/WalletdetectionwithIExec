@@ -42,7 +42,7 @@ export default function RiskDashboard({ walletAddress }: RiskDashboardProps) {
         setPortfolioData(portfolio)
 
         // Call Python AI Agent
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+        const apiUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000').replace(/\/$/, '')
         const aiResponse = await fetch(`${apiUrl}/analyze`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
