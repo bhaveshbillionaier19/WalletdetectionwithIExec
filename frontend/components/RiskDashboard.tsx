@@ -34,7 +34,9 @@ export default function RiskDashboard({ walletAddress }: RiskDashboardProps) {
         setError(null)
 
         // Fetch portfolio data from API
-        const portfolioResponse = await fetch(`/api/portfolio/${walletAddress}`)
+        // Detect network from MetaMask (chainId 1 = mainnet, 11155111 = Sepolia)
+        const network = 'sepolia' // Change to 'mainnet' for production or detect from wallet
+        const portfolioResponse = await fetch(`/api/portfolio/${walletAddress}?network=${network}`)
         if (!portfolioResponse.ok) {
           throw new Error('Failed to fetch portfolio data')
         }

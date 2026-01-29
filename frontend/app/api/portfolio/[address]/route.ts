@@ -21,9 +21,15 @@ export async function GET(
     }
 
     try {
-        // Fetch data from Etherscan API (using free tier)
+        // Detect network from query parameter (defaults to mainnet)
+        const { searchParams } = new URL(request.url)
+        const network = searchParams.get('network') || 'mainnet'
+
+        // Configure API endpoints based on network
         const etherscanApiKey = process.env.NEXT_PUBLIC_ETHERSCAN_API_KEY || 'YourApiKeyToken'
-        const baseUrl = 'https://api.etherscan.io/api'
+        const baseUrl = network === 'sepolia'
+            ? 'https://api-sepolia.etherscan.io/api'
+            : 'https://api.etherscan.io/api'
 
         // 1. Get ETH balance
         const balanceResponse = await fetch(
@@ -34,14 +40,17 @@ export async function GET(
             ? parseFloat(balanceData.result) / 1e18
             : 0
 
-        // 2. Get ETH price from CoinGecko
-        const priceResponse = await fetch(
-            'https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd'
-        )
-        const priceData = await priceResponse.json()
-        const ethPrice = priceData.ethereum?.usd || 0
+        // 2. Get ETH price from CoinGecko (only for mainnet, testnet ETH has no value)
+        let ethPrice = 0
+        if (network === 'mainnet') {
+            const priceResponse = await fetch(
+                'https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd'
+            )
+            const priceData = await priceResponse.json()
+            ethPrice = priceData.ethereum?.usd || 0
+        }
 
-        // Calculate total value (simplified - only ETH, not tokens)
+        // Calculate total value (0 for testnet)
         const totalValue = ethBalance * ethPrice
 
         // 3. Get transaction history for wallet age and last activity
